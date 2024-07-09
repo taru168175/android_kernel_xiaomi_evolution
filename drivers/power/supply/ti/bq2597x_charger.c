@@ -497,11 +497,26 @@ EXPORT_SYMBOL_GPL(bq2597x_enable_charge);
 static int bq2597x_check_charge_enabled(struct bq2597x *bq, bool *enabled)
 {
 	int ret;
-	u8 val;
+	u8 val,val1;
 
 	ret = bq2597x_read_byte(bq, BQ2597X_REG_0C, &val);
-	if (!ret)
-		*enabled = !!(val & BQ2597X_CHG_EN_MASK);
+	if (!ret) {
+		ret = bq2597x_read_byte(bq,BQ2597X_REG_0A, &val1);
+		if (!ret) {
+			if ((val & BQ2597X_CHG_EN_MASK) && (val1 &  BQ2597X_CONV_SWITCHING_STAT_MASK)) {
+			*enabled = true;
+			pr_info("BQ2597X status: enabled\n");
+			return ret;
+			}
+		}
+		else {
+			pr_info("read BQ2597X_REG_0A error\n");
+		}
+	} else {
+		pr_info("read BQ2597X_REG_0C error\n");
+	}
+	*enabled = false;
+	pr_info("BQ2597X status: disabled\n");
 	return ret;
 }
 
@@ -1872,63 +1887,9 @@ static int bq2597x_init_regulation(struct bq2597x *bq)
 	return 0;
 }
 
-/* 2021.03.06 longcheer jiangshitian HMI_M306_A01-588 start */
-static int bq2597x_set_fsw(struct bq2597x *bq, int value)
-{
-	int ret;
-	u8 val;
-
-	switch(value)
-	{
-		case 0:
-			val = BQ2597X_FSW_SET_187P5KHZ;
-		break;
-		case 1:
-			val = BQ2597X_FSW_SET_250KHZ;
-		break;
-		case 2:
-			val = BQ2597X_FSW_SET_300KHZ;
-		break;
-		case 3:
-			val = BQ2597X_FSW_SET_375KHZ;
-		break;
-		case 4:
-			val = BQ2597X_FSW_SET_500KHZ;
-		break;
-		case 5:
-		case 6:
-			val = BQ2597X_FSW_SET_750KHZ;
-		break;
-		case 7:
-			val = BQ2597X_FSW_SET_750KHZ_SC8851;
-		break;
-		defalut:
-			val = BQ2597X_FSW_SET_500KHZ;
-		break;
-	}
-
-	val <<= BQ2597X_FSW_SET_SHIFT;
-
-	ret = bq2597x_update_bits(bq, BQ2597X_REG_0B, BQ2597X_FSW_SET_MASK, val);
-
-	return ret;
-}
-/* 2021.03.06 longcheer jiangshitian HMI_M306_A01-588 end */
-
 static int bq2597x_init_device(struct bq2597x *bq)
 {
 	bq2597x_enable_wdt(bq, false);
-
-	/* 2021.03.06 longcheer jiangshitian HMI_M306_A01-588 start */
-	if(SC8551 == bq->chip_vendor)
-	{
-		bq2597x_set_fsw(bq, 7);
-	}
-	else if((BQ25968 == bq->chip_vendor) || (BQ25970 == bq->chip_vendor))
-	{
-		bq2597x_set_fsw(bq, 5);
-	}
-	/* 2021.03.06 longcheer jiangshitian HMI_M306_A01-588 end */
 
 	bq2597x_set_ss_timeout(bq, 100000);
 	bq2597x_set_ibus_ucp_thr(bq, 300);
@@ -2586,7 +2547,7 @@ static int bq2597x_charger_probe(struct i2c_client *client,
 	bq_info("client->irq=%d", client->irq);
 	ret = i2c_smbus_read_byte_data(client, BQ2597X_REG_13);
 	if (ret != BQ25968_DEVICE_ID && ret !=SC8551_DEVICE_ID && ret !=BQ25970_DEVICE_ID) {
-		bq_err("failed to communicate with chip\n");
+		bq_err("failed to communicate with chip, ret:%d\n", ret);
 		return -ENODEV;
 	}
 	bq_info("bq device id=0x%x\n", ret);
