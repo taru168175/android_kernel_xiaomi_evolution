@@ -296,7 +296,7 @@ static void freq_release(struct work_struct *work)
 	}
 	if (atomic_read(&boosted) == 1) {
 		pr_info("%s  release freq lock\n", __func__);
-		update_userlimit_cpu_freq(CPU_KIR_FP, cluster_num, freq_to_set);
+		//update_userlimit_cpu_freq(CPU_KIR_FP, cluster_num, freq_to_set);
 		atomic_dec(&boosted);
 	}
 }
@@ -318,7 +318,7 @@ static int freq_hold(int sec)
 	}
 	if (atomic_read(&boosted) == 0) {
 		pr_info( "%s for %d * 500 msec \n", __func__, sec);
-		update_userlimit_cpu_freq(CPU_KIR_FP, cluster_num, freq_to_set);
+		//update_userlimit_cpu_freq(CPU_KIR_FP, cluster_num, freq_to_set);
 		atomic_inc(&boosted);
 		release_timer.expires = jiffies + (HZ / 2) * sec;
 		add_timer(&release_timer);
@@ -493,7 +493,7 @@ static const struct file_operations proc_file_fpc_ops = {
 	.release = single_release,
 };
 
-
+/*
 static int fpc_power_supply(struct fpc_data *fpc)
 {
 	int ret = 0;
@@ -519,6 +519,7 @@ static int fpc_power_supply(struct fpc_data *fpc)
 	pr_info("fp Power init OK");
 	return ret;
 }
+*/
 
 
 static int mtk6765_probe(struct spi_device *spidev)
@@ -600,7 +601,7 @@ static int mtk6765_probe(struct spi_device *spidev)
 		goto exit;
 	}
 
-	fpc_power_supply(fpc);
+	//fpc_power_supply(fpc);
 	fpc->clocks_enabled = false;
 	set_clks(fpc, true);
 	(void)hw_reset(fpc);
