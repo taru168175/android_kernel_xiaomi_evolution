@@ -3503,11 +3503,11 @@ static const struct pid_entry tid_base_stuff[] = {
 #ifdef CONFIG_SCHED_INFO
 	ONE("schedstat", S_IRUGO, proc_pid_schedstat),
 #endif
-#ifdef CONFIG_TASK_DELAY_ACCT
-	REG("delay",      S_IRUGO, proc_delay_file_operations),
-#endif
 #ifdef CONFIG_UCLAMP_TASK
 	ONE("util_clamp",  0444, proc_pid_util_clamp),
+#endif
+#ifdef CONFIG_TASK_DELAY_ACCT
+	REG("delay",      S_IRUGO, proc_delay_file_operations),
 #endif
 #ifdef CONFIG_LATENCYTOP
 	REG("latency",  S_IRUGO, proc_lstats_operations),

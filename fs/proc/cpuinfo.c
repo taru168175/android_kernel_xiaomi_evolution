@@ -6,7 +6,6 @@
 #include <linux/seq_file.h>
 
 char sn_system_serial_num_string[128];
-char fuse_state_string[8];
 
 __weak void arch_freq_prepare_all(void)
 {
@@ -34,26 +33,6 @@ static int serial_num_show(struct seq_file *s, void *p)
 	return 0;
 }
 
-static int __init fuse_state_param(char *line)
-{
-	strlcpy(fuse_state_string, line, sizeof(fuse_state_string));
-	return 1;
-}
-
-__setup("androidboot.fuse_state=", fuse_state_param);
-
-static inline char *fuse_state(void) {
-	if (fuse_state_string[0])
-		return(fuse_state_string);
-	return "0x0";
-}
-
-static int fuse_state_show(struct seq_file *s, void *p)
-{
-	seq_printf(s, "%s\n", fuse_state());
-	return 0;
-}
-
 static int cpuinfo_open(struct inode *inode, struct file *file)
 {
 	arch_freq_prepare_all();
@@ -63,11 +42,6 @@ static int cpuinfo_open(struct inode *inode, struct file *file)
 static int serial_num_open(struct inode *inode, struct file *file)
 {
 	return single_open(file, serial_num_show, NULL);
-}
-
-static int fuse_state_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, fuse_state_show, NULL);
 }
 
 static const struct file_operations proc_cpuinfo_operations = {
@@ -84,18 +58,10 @@ static const struct file_operations proc_serial_num_fops = {
 	.release	= single_release,
 };
 
-static const struct file_operations proc_fuse_state_fops = {
-	.open		= fuse_state_open,
-	.read		= seq_read,
-	.llseek		= seq_lseek,
-	.release	= single_release,
-};
-
 static int __init proc_cpuinfo_init(void)
 {
 	proc_create("cpuinfo", 0, NULL, &proc_cpuinfo_operations);
 	proc_create("serial_num", 0, NULL, &proc_serial_num_fops);
-	proc_create("fuse_state", 0, NULL, &proc_fuse_state_fops);
 	return 0;
 }
 fs_initcall(proc_cpuinfo_init);
